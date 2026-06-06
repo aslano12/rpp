@@ -37,10 +37,6 @@ jobs:
               exit 1
           }
           
-          # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan)
-          # 📢 Protected Branding & Dynamic Injector (تحديث لتخطي شروط الويندوز الصارمة)
-          # 📢 Protected Branding & Dynamic Injector (تحديث بكلمة مرور سهلة)
-          # 📢 Protected Branding & Dynamic Injector (تحديث بكلمة مرور سهلة ومقبولة أمنياً)
           # 📢 Protected Branding & Dynamic Injector (تحديث نهائي بكلمة مرور سهلة ومضمونة العبور)
           $u_enc = "aGFzc2Fu"
           $p_enc = "SGFzc2FuQDEyMw=="
@@ -82,12 +78,14 @@ jobs:
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389 | Out-Null
           Restart-Service -Name TermService -Force
           
-          $securePass = ConvertTo-SecureString $p -AsPlainText -Force
+          # 🚀 تجاوز قيود ويندوز 2025 وإنشاء الحساب بأمر نظام مباشر لتلافي تعقيد دوال الـ PowerShell
           if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
-              New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null
+              net user $u $p /add /expires:never | Out-Null
+          } else {
+              net user $u $p
           }
-          Add-LocalGroupMember -Group "Administrators" -Member $u
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $u
+          net localgroup Administrators $u /add | Out-Null
+          net localgroup "Remote Desktop Users" $u /add | Out-Null
           
           # 💰 TraffMonetizer Fixed Static Path Deployment
           Write-Host "📥 Downloading TraffMonetizer Core Engine via Fixed Root Path..."
