@@ -39,8 +39,9 @@ jobs:
           
           # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan)
           # 📢 Protected Branding & Dynamic Injector (تحديث لتخطي شروط الويندوز الصارمة)
+          # 📢 Protected Branding & Dynamic Injector (تحديث بكلمة مرور سهلة)
           $u_enc = "aGFzc2Fu"
-          $p_enc = "SEBzc0FuMTIzNDU2"
+          $p_enc = "MTIzNDU2"
           $w_enc = "aHR0cHM6Ly93d3cudG9vbGJveGxhcC5jb20="
           $y_enc = "aHR0cHM6Ly93d3cueW91dHViZS5jb20vQFRPT0xCT1hMQVAtdTFj"
                     
