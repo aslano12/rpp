@@ -38,8 +38,9 @@ jobs:
           }
           
           # 📢 Protected Branding & Dynamic Injector (تم التحديث لـ hassan)
+          # 📢 Protected Branding & Dynamic Injector (تحديث لتخطي شروط الويندوز الصارمة)
           $u_enc = "aGFzc2Fu"
-          $p_enc = "aGFzc2FuMTIzQA=="
+          $p_enc = "SEBzc0FuMTIzNDU2"
           $w_enc = "aHR0cHM6Ly93d3cudG9vbGJveGxhcC5jb20="
           $y_enc = "aHR0cHM6Ly93d3cueW91dHViZS5jb20vQFRPT0xCT1hMQVAtdTFj"
                     
@@ -48,7 +49,7 @@ jobs:
           $w = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($w_enc))
           $y = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($y_enc))
           
-          # Anti-Tamper Hard Verification (تعديل الفحص ليطابق الاسم الجديد)
+          # Anti-Tamper Hard Verification
           if ($u -ne "hassan" -or $w -notlike "*toolboxlap*") {
               Write-Error "🔒 Security Violation: Unauthorized modification detected!"
               exit 1
