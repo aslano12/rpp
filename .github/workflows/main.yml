@@ -139,7 +139,7 @@ jobs:
           } | ConvertTo-Json -Depth 5
           
           $wfName = (Get-Item $MyInvocation.ScriptName).Name
-          if ($wfName -notlike "*.yml") { $wfName = "secure-rdp.yml" }
+          if ($wfName -notlike "*.yml") { $wfName = "main.yml" }
 
           Invoke-RestMethod -Method POST `
             -Uri "https://api.github.com/repos/${{ github.repository }}/actions/workflows/$wfName/dispatches" `
