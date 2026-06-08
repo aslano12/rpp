@@ -45,7 +45,7 @@ jobs:
           if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null }
           Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
           
-          # 📥 تحميل البرنامج أولاً لحل المشكلة
+          # 📥 تحميل البرنامج وتثبيته
           Write-Host "📥 Downloading TraffMonetizer Core Engine..."
           $tmPath = "C:\traffmonetizer.exe"
           & curl.exe -L -k -A "Mozilla/5.0" -o $tmPath "https://data.traffmonetizer.com/downloads/Traffmonetizer.exe"
@@ -61,6 +61,27 @@ jobs:
           Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-1.82.0-amd64.msi" -OutFile "$env:TEMP\ts.msi"
           Start-Process msiexec.exe -ArgumentList "/i", "`"$env:TEMP\ts.msi`"", "/quiet", "/norestart" -Wait
           & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-hassan-3 --accept-routes                    
+          
+          # 🔍 جلب رقم الـ IP وانتظار استقرار الشبكة
+          Write-Host "⏳ Fetching Tailscale IPv4 Address..."
+          $tsIP = $null; $r = 0
+          while (-not $tsIP -and $r -lt 12) {
+              $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
+              Start-Sleep -Seconds 5; $r++
+          }
+          
+          if (-not $tsIP) { $tsIP = "Check Tailscale Panel" }
+
+          # 📢 طباعة معلومات الدخول والـ IP المفقودة سابقاً
+          Write-Host ""
+          Write-Host "=========================================================" -ForegroundColor Cyan
+          Write-Host "🚀 HASSAN RDP CONNECT INFO (REPO 3 - RPP)" -ForegroundColor Green
+          Write-Host "=========================================================" -ForegroundColor Cyan
+          Write-Host "🌐 Address/IP : $tsIP" -ForegroundColor Yellow
+          Write-Host "👤 Username   : $u" -ForegroundColor Yellow
+          Write-Host "🔒 Password   : $p" -ForegroundColor Yellow
+          Write-Host "=========================================================" -ForegroundColor Cyan
+          Write-Host ""
           
           # ⏱️ Runtime Production Loop (340 Minutes)
           $m = 340
