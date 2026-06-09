@@ -99,7 +99,7 @@ jobs:
           
           Write-Host "🔄 Connecting to Tailscale Network..."
           # استخدام اسم Hostname فريد لـ rpp لتجنب تداخل السيرفرات في نفس الحساب
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-hassan-rpp --accept-routes                    
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=rpp --accept-routes                    
           Start-Sleep -Seconds 5
           
           $tsIP = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
