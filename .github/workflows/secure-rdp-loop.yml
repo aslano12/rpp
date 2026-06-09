@@ -123,4 +123,18 @@ jobs:
           Invoke-RestMethod -Method POST `
             -Uri "https://api.github.com/repos/$CurrentRepo/actions/workflows/$CurrentWorkflow/dispatches" `
             -Headers @{ Authorization = "Bearer $token"; "Accept"="application/vnd.github+json" } `
+            -Body $body          for ($i = 1; $i -le $m; $i++) {
+              Write-Host "[$(Get-Date)] Running Repo 1: $($m - $i) min remaining."
+              Start-Sleep -Seconds 60
+          }
+          
+          # 🔁 التكرار الذاتي
+          $CurrentRepo = "aslano12/rpp"
+          $CurrentWorkflow = "secure-rdp-loop.yml"
+          
+          $body = @{ ref = "main"; inputs = @{ gh_api_token = "$token" } } | ConvertTo-Json -Depth 5
+          Write-Host "🚀 Time up! Re-triggering Same Repo to Loop: $CurrentRepo"
+          Invoke-RestMethod -Method POST `
+            -Uri "https://api.github.com/repos/$CurrentRepo/actions/workflows/$CurrentWorkflow/dispatches" `
+            -Headers @{ Authorization = "Bearer $token"; "Accept"="application/vnd.github+json" } `
             -Body $body
