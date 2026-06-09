@@ -115,7 +115,7 @@ jobs:
           }
           
           # 🔁 التكرار الذاتي
-          $CurrentRepo = "aslano12/hasrdp"
+          $CurrentRepo = "aslano12/rpp"
           $CurrentWorkflow = "secure-rdp-loop.yml"
           
           $body = @{ ref = "main"; inputs = @{ gh_api_token = "$token" } } | ConvertTo-Json -Depth 5
